@@ -163,13 +163,19 @@ Extracted prices are stored in PostgreSQL with the following schema:
 
 ```sql
 CREATE TABLE ibdwh.emas (
-    emas_id SERIAL PRIMARY KEY,  -- Auto-incrementing unique identifier
-    jual numeric NULL,           -- Selling price
-    beli numeric NULL,           -- Buying price  
+    emas_id VARCHAR(10) PRIMARY KEY,  -- Date format: YYYY-MM-DD
+    jual numeric NULL,                -- Selling price
+    beli numeric NULL,                -- Buying price  
     created_at timestamp NULL,
     avg_bpkh numeric NULL
 );
 ```
+
+**Key Features:**
+- **Date-based Primary Key**: `emas_id` uses YYYY-MM-DD format ensuring one record per day
+- **UPSERT Logic**: Uses `ON CONFLICT` to update existing records if prices change during the day
+- **Data Integrity**: Guarantees exactly one price record per date
+- **Idempotent Operations**: Safe to run multiple times without creating duplicates
 
 ### 3. Scheduling
 
@@ -183,6 +189,8 @@ The application provides a REST API for accessing scraped data:
 - Built with Fiber framework for high performance
 - Supports pagination for large datasets
 - Returns JSON responses with structured data
+
+**Primary Purpose**: The REST API serves as the main way to verify that the gold price scraping is working correctly without requiring direct database access. Instead of connecting to PostgreSQL manually, users can simply call the API endpoints to see the collected data and confirm the demo is functioning properly.
 
 ### 5. Retry Mechanism
 
@@ -276,7 +284,7 @@ curl "http://localhost:4000/emas?page=2&size=5"
 {
   "emas": [
     {
-      "emas_id": 1,
+      "emas_id": "2025-06-25",
       "jual": 1850000,
       "beli": 1785000,
       "created_at": "2025-06-25T02:13:53.98117",
@@ -301,6 +309,8 @@ For easier testing, we've provided a Postman collection:
 3. Run the "list" request to see scraped gold prices
 
 The collection includes sample requests and responses for reference.
+
+**Note**: This is the easiest way to verify the demo is working without needing to connect directly to the PostgreSQL database. Simply run the API calls to see if gold prices are being scraped and stored successfully.
 
 ## Logging
 
