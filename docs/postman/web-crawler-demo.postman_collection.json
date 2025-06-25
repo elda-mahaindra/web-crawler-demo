@@ -1,0 +1,102 @@
+{
+	"info": {
+		"_postman_id": "05401c37-e236-44b0-a696-f35374636fa7",
+		"name": "web-crawler-demo",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "30554957"
+	},
+	"item": [
+		{
+			"name": "emas",
+			"item": [
+				{
+					"name": "list",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}:{{port}}/emas?page=1&size=10",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"emas"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "ok",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}:{{port}}/emas?page=1&size=10",
+									"host": [
+										"{{host}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"emas"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "size",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Wed, 25 Jun 2025 02:39:28 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "353"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"emas\": [\n        {\n            \"emas_id\": 1,\n            \"jual\": 1850000,\n            \"beli\": 1785000,\n            \"created_at\": \"2025-06-25T02:38:42.032725\",\n            \"avg_bpkh\": null\n        },\n        {\n            \"emas_id\": 2,\n            \"jual\": 1850000,\n            \"beli\": 1785000,\n            \"created_at\": \"2025-06-25T02:39:00.6966\",\n            \"avg_bpkh\": null\n        },\n        {\n            \"emas_id\": 3,\n            \"jual\": 1850000,\n            \"beli\": 1785000,\n            \"created_at\": \"2025-06-25T02:39:19.267614\",\n            \"avg_bpkh\": null\n        }\n    ],\n    \"page\": 1,\n    \"size\": 10,\n    \"pages\": 1,\n    \"total\": 3\n}"
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "host",
+			"value": "localhost",
+			"type": "default"
+		},
+		{
+			"key": "port",
+			"value": "",
+			"type": "default"
+		}
+	]
+}
