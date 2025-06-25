@@ -17,7 +17,7 @@ func (service *Scheduler) Run() {
 
 	for _, setup := range service.setups {
 		switch setup.Id {
-		case "gold_price":
+		case "hourly_gold_price":
 			{
 				go service.RunEmas(setup)
 			}

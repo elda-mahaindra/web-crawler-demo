@@ -25,6 +25,8 @@ FROM alpine:latest
 # Install additional packages needed for the application including Chrome
 RUN apk update && apk upgrade && \
      apk add --no-cache bash git openssh curl \
+     # Install timezone data for proper timezone handling
+     tzdata \
      # Install Chromium and dependencies for headless browser automation
      chromium \
      nss \

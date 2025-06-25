@@ -16,9 +16,11 @@
   "scheduler": {
     "setups": [
       {
-        "id": "gold_price",
+        "id": "hourly_gold_price",
         "url": "https://sahabat.pegadaian.co.id/harga-emas",
-        "ticker_duration": "24h",
+        "start_time": "11:00",
+        "ticker_duration": "1h",
+        "timezone": "+07",
         "retry": {
           "max_attempts": 5,
           "initial_delay": "2s",

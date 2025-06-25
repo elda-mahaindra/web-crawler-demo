@@ -33,7 +33,9 @@ type DB struct {
 type SchedulerSetup struct {
 	Id             string        `mapstructure:"id"`
 	Url            string        `mapstructure:"url"`
+	StartTime      string        `mapstructure:"start_time"`
 	TickerDuration time.Duration `mapstructure:"ticker_duration"`
+	Timezone       string        `mapstructure:"timezone"`
 	Retry          RetryConfig   `mapstructure:"retry"`
 }
 
