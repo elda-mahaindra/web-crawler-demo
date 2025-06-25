@@ -12,19 +12,30 @@ import (
 )
 
 const createEmas = `-- name: CreateEmas :one
-INSERT INTO ibdwh.emas (jual, beli, created_at)
-VALUES ($1, $2, $3)
+INSERT INTO ibdwh.emas (emas_id, jual, beli, created_at)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (emas_id) 
+DO UPDATE SET 
+    jual = EXCLUDED.jual,
+    beli = EXCLUDED.beli,
+    created_at = EXCLUDED.created_at
 RETURNING emas_id, jual, beli, created_at, avg_bpkh
 `
 
 type CreateEmasParams struct {
+	EmasID    string           `json:"emas_id"`
 	Jual      pgtype.Numeric   `json:"jual"`
 	Beli      pgtype.Numeric   `json:"beli"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 }
 
 func (q *Queries) CreateEmas(ctx context.Context, arg CreateEmasParams) (IbdwhEma, error) {
-	row := q.db.QueryRow(ctx, createEmas, arg.Jual, arg.Beli, arg.CreatedAt)
+	row := q.db.QueryRow(ctx, createEmas,
+		arg.EmasID,
+		arg.Jual,
+		arg.Beli,
+		arg.CreatedAt,
+	)
 	var i IbdwhEma
 	err := row.Scan(
 		&i.EmasID,
@@ -38,7 +49,7 @@ func (q *Queries) CreateEmas(ctx context.Context, arg CreateEmasParams) (IbdwhEm
 
 const getAllEmas = `-- name: GetAllEmas :many
 SELECT emas_id, jual, beli, created_at, avg_bpkh FROM ibdwh.emas
-ORDER BY created_at ASC
+ORDER BY emas_id DESC
 LIMIT $1
 OFFSET $2
 `

@@ -84,7 +84,7 @@ type CreateEmasParams struct {
 }
 
 type CreateEmasResult struct {
-	ID int32
+	ID string
 }
 
 func (service *Service) CreateEmas(ctx context.Context, params *CreateEmasParams) (*CreateEmasResult, error) {
@@ -104,12 +104,19 @@ func (service *Service) CreateEmas(ctx context.Context, params *CreateEmasParams
 	// Crawl gold prices from website with retry
 	jual, beli, err := service.crawlGoldPricesWithRetry(ctx, params.Url, params.Retry, logger)
 	if err != nil {
-		logger.WithError(err).Error("Failed to crawl gold prices after all retry attempts")
-		return nil, fmt.Errorf("failed to crawl gold prices: %w", err)
+		err = fmt.Errorf("failed to crawl gold prices: %w", err)
+
+		logger.WithError(err).Error()
+
+		return nil, err
 	}
 
-	// Create emas
+	// Generate date-based emas_id (YYYY-MM-DD format)
+	emasID := params.CreatedAt.Format("2006-01-02")
+
+	// Create or update emas (UPSERT)
 	emas, err := service.store.CreateEmas(ctx, sqlc.CreateEmasParams{
+		EmasID: emasID,
 		Jual: pgtype.Numeric{
 			Int:   big.NewInt(int64(jual)),
 			Valid: true,

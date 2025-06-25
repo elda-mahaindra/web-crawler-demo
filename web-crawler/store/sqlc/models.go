@@ -9,7 +9,7 @@ import (
 )
 
 type IbdwhEma struct {
-	EmasID    int32            `json:"emas_id"`
+	EmasID    string           `json:"emas_id"`
 	Jual      pgtype.Numeric   `json:"jual"`
 	Beli      pgtype.Numeric   `json:"beli"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
