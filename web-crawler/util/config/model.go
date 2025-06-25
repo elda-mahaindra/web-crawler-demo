@@ -34,6 +34,15 @@ type SchedulerSetup struct {
 	Id             string        `mapstructure:"id"`
 	Url            string        `mapstructure:"url"`
 	TickerDuration time.Duration `mapstructure:"ticker_duration"`
+	Retry          RetryConfig   `mapstructure:"retry"`
+}
+
+type RetryConfig struct {
+	MaxAttempts   int           `mapstructure:"max_attempts"`
+	InitialDelay  time.Duration `mapstructure:"initial_delay"`
+	MaxDelay      time.Duration `mapstructure:"max_delay"`
+	BackoffFactor float64       `mapstructure:"backoff_factor"`
+	EnableJitter  bool          `mapstructure:"enable_jitter"`
 }
 
 type Scheduler struct {

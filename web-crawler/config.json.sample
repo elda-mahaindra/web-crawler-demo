@@ -18,7 +18,14 @@
       {
         "id": "gold_price",
         "url": "https://sahabat.pegadaian.co.id/harga-emas",
-        "ticker_duration": "24h"
+        "ticker_duration": "24h",
+        "retry": {
+          "max_attempts": 5,
+          "initial_delay": "2s",
+          "max_delay": "30s",
+          "backoff_factor": 2.0,
+          "enable_jitter": true
+        }
       }
     ]
   }

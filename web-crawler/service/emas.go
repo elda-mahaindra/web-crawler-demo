@@ -80,6 +80,7 @@ func (service *Service) GetAllEmas(ctx context.Context, params *GetAllEmasParams
 type CreateEmasParams struct {
 	Url       string
 	CreatedAt time.Time
+	Retry     RetryConfig
 }
 
 type CreateEmasResult struct {
@@ -100,10 +101,10 @@ func (service *Service) CreateEmas(ctx context.Context, params *CreateEmasParams
 	// Initialize result
 	result := &CreateEmasResult{}
 
-	// Crawl gold prices from website
-	jual, beli, err := service.crawlGoldPrices(ctx, params.Url)
+	// Crawl gold prices from website with retry
+	jual, beli, err := service.crawlGoldPricesWithRetry(ctx, params.Url, params.Retry, logger)
 	if err != nil {
-		logger.WithError(err).Error("Failed to crawl gold prices")
+		logger.WithError(err).Error("Failed to crawl gold prices after all retry attempts")
 		return nil, fmt.Errorf("failed to crawl gold prices: %w", err)
 	}
 
@@ -367,4 +368,68 @@ func (service *Service) crawlGoldPrices(ctx context.Context, url string) (float6
 	}).Info()
 
 	return jual, beli, nil
+}
+
+// crawlGoldPricesWithRetry implements retry logic with exponential backoff
+func (service *Service) crawlGoldPricesWithRetry(ctx context.Context, url string, retryConfig RetryConfig, logger *logrus.Entry) (float64, float64, error) {
+	const op = "[service] - Service.crawlGoldPricesWithRetry"
+
+	var jual, beli float64
+	var lastErr error
+
+	for attempt := 1; attempt <= retryConfig.MaxAttempts; attempt++ {
+		logger := logger.WithFields(logrus.Fields{
+			"[op]":         op,
+			"attempt":      attempt,
+			"max_attempts": retryConfig.MaxAttempts,
+		})
+
+		logger.WithFields(logrus.Fields{
+			"message": "Starting scraping attempt",
+		}).Info()
+
+		// Try to crawl gold prices
+		jual, beli, lastErr = service.crawlGoldPrices(ctx, url)
+		if lastErr == nil {
+			logger.WithFields(logrus.Fields{
+				"message": "Successfully scraped gold prices",
+				"jual":    jual,
+				"beli":    beli,
+			}).Info()
+
+			return jual, beli, nil
+		}
+
+		logger.WithFields(logrus.Fields{
+			"message": "Scraping attempt failed",
+			"error":   lastErr,
+		}).Warn()
+
+		// If this is the last attempt, don't wait
+		if attempt >= retryConfig.MaxAttempts {
+			break
+		}
+
+		// Calculate delay with exponential backoff
+		delay := service.calculateBackoffDelay(attempt, retryConfig)
+
+		logger.WithFields(logrus.Fields{
+			"message":       "Waiting before next retry attempt",
+			"delay_seconds": delay.Seconds(),
+		}).Info()
+
+		// Wait before next attempt
+		select {
+		case <-ctx.Done():
+			return 0, 0, fmt.Errorf("context cancelled during retry wait: %w", ctx.Err())
+		case <-time.After(delay):
+			// Continue to next attempt
+		}
+	}
+
+	err := fmt.Errorf("all %d retry attempts failed, last error: %w", retryConfig.MaxAttempts, lastErr)
+
+	logger.WithError(err).Error()
+
+	return 0, 0, err
 }

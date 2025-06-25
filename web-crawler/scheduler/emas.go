@@ -41,6 +41,13 @@ func (scheduler *Scheduler) RunEmas(setup config.SchedulerSetup) {
 			result, err := scheduler.service.CreateEmas(ctx, &service.CreateEmasParams{
 				Url:       setup.Url,
 				CreatedAt: now,
+				Retry: service.RetryConfig{
+					MaxAttempts:   setup.Retry.MaxAttempts,
+					InitialDelay:  setup.Retry.InitialDelay,
+					MaxDelay:      setup.Retry.MaxDelay,
+					BackoffFactor: setup.Retry.BackoffFactor,
+					EnableJitter:  setup.Retry.EnableJitter,
+				},
 			})
 			if err != nil {
 				logger.WithError(err).Error()
