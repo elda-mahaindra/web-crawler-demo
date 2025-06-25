@@ -15,6 +15,20 @@ services:
     networks:
       - web-crawler-demo
 
+  web-crawler:
+    build: ./web-crawler
+    image: web-crawler
+    container_name: web-crawler
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./web-crawler/config.json:/app/config.json
+    depends_on:
+      - postgres
+    networks:
+      - web-crawler-demo
+
 networks:
   web-crawler-demo:
     driver: bridge
