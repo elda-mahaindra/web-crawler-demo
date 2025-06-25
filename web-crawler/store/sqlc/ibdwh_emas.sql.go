@@ -38,7 +38,7 @@ func (q *Queries) CreateEmas(ctx context.Context, arg CreateEmasParams) (IbdwhEm
 
 const getAllEmas = `-- name: GetAllEmas :many
 SELECT emas_id, jual, beli, created_at, avg_bpkh FROM ibdwh.emas
-ORDER BY created_at DESC
+ORDER BY created_at ASC
 LIMIT $1
 OFFSET $2
 `

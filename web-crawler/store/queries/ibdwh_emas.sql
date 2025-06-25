@@ -5,7 +5,7 @@ RETURNING *;
 
 -- name: GetAllEmas :many
 SELECT * FROM ibdwh.emas
-ORDER BY created_at DESC
+ORDER BY created_at ASC
 LIMIT $1
 OFFSET $2;
 
