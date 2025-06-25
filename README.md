@@ -241,7 +241,7 @@ curl "http://localhost:4000/emas?page=2&size=5"
 {
   "emas": [
     {
-      "emas_id": null,
+      "emas_id": 1,
       "jual": 1850000,
       "beli": 1785000,
       "created_at": "2025-06-25T02:13:53.98117",
