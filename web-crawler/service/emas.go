@@ -129,7 +129,7 @@ func (service *Service) CreateEmas(ctx context.Context, params *CreateEmasParams
 	}
 
 	// Set result
-	result.ID = emas.EmasID.Int32
+	result.ID = emas.EmasID
 
 	return result, nil
 }
