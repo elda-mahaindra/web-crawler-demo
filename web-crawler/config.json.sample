@@ -1,0 +1,23 @@
+{
+  "app": {
+    "name": "service-a"
+  },
+  "db": {
+    "postgres": {
+      "connection_string": "postgresql://postgres:changeme@postgres:5432/web_crawler_demo_db",
+      "pool": {
+        "max_conns": 25,
+        "min_conns": 5
+      }
+    }
+  },
+  "scheduler": {
+    "init_delay": "1m",
+    "setups": [
+      {
+        "id": "gold_price",
+        "ticker_duration": "24h"
+      }
+    ]
+  }
+}
