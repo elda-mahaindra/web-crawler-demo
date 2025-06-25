@@ -30,10 +30,10 @@ type DB struct {
 
 type SchedulerSetup struct {
 	Id             string        `mapstructure:"id"`
+	Url            string        `mapstructure:"url"`
 	TickerDuration time.Duration `mapstructure:"ticker_duration"`
 }
 
 type Scheduler struct {
-	InitDelay time.Duration    `mapstructure:"init_delay"`
-	Setups    []SchedulerSetup `mapstructure:"setups"`
+	Setups []SchedulerSetup `mapstructure:"setups"`
 }

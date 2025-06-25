@@ -39,6 +39,7 @@ func (scheduler *Scheduler) RunEmas(setup config.SchedulerSetup) {
 			}).Info()
 
 			result, err := scheduler.service.CreateEmas(ctx, &service.CreateEmasParams{
+				Url:       setup.Url,
 				CreatedAt: now,
 			})
 			if err != nil {

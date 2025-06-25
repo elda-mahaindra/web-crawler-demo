@@ -17,6 +17,7 @@ import (
 )
 
 type CreateEmasParams struct {
+	Url       string
 	CreatedAt time.Time
 }
 
@@ -24,9 +25,57 @@ type CreateEmasResult struct {
 	ID int32
 }
 
-// crawlGoldPrices fetches gold prices from Pegadaian website using headless browser
+func (service *Service) CreateEmas(ctx context.Context, params *CreateEmasParams) (*CreateEmasResult, error) {
+	const op = "[service] - Service.CreateEmas"
+
+	// Initialize logger
+	logger := service.logger.WithFields(logrus.Fields{
+		"[op]":   op,
+		"params": fmt.Sprintf("%+v", params),
+	})
+
+	logger.Info()
+
+	// Initialize result
+	result := &CreateEmasResult{}
+
+	// Crawl gold prices from website
+	jual, beli, err := service.crawlGoldPrices(ctx, params.Url)
+	if err != nil {
+		logger.WithError(err).Error("Failed to crawl gold prices")
+		return nil, fmt.Errorf("failed to crawl gold prices: %w", err)
+	}
+
+	// Create emas
+	emas, err := service.store.CreateEmas(ctx, sqlc.CreateEmasParams{
+		Jual: pgtype.Numeric{
+			Int:   big.NewInt(int64(jual)),
+			Valid: true,
+		},
+		Beli: pgtype.Numeric{
+			Int:   big.NewInt(int64(beli)),
+			Valid: true,
+		},
+		CreatedAt: pgtype.Timestamp{
+			Time:  params.CreatedAt,
+			Valid: true,
+		},
+	})
+	if err != nil {
+		logger.WithError(err).Error()
+
+		return nil, err
+	}
+
+	// Set result
+	result.ID = emas.EmasID.Int32
+
+	return result, nil
+}
+
+// crawlGoldPrices fetches gold prices from the specified website using headless browser
 // This method handles JavaScript-rendered content properly
-func (service *Service) crawlGoldPrices(ctx context.Context) (float64, float64, error) {
+func (service *Service) crawlGoldPrices(ctx context.Context, url string) (float64, float64, error) {
 	const op = "[service] - Service.crawlGoldPrices"
 
 	logger := service.logger.WithFields(logrus.Fields{
@@ -50,7 +99,7 @@ func (service *Service) crawlGoldPrices(ctx context.Context) (float64, float64, 
 
 	err := chromedp.Run(ctx,
 		// Navigate to the gold price page
-		chromedp.Navigate("https://sahabat.pegadaian.co.id/harga-emas"),
+		chromedp.Navigate(url),
 
 		// Wait for the page to load
 		chromedp.WaitVisible("body", chromedp.ByQuery),
@@ -257,52 +306,4 @@ func (service *Service) crawlGoldPrices(ctx context.Context) (float64, float64, 
 	}).Info()
 
 	return jual, beli, nil
-}
-
-func (service *Service) CreateEmas(ctx context.Context, params *CreateEmasParams) (*CreateEmasResult, error) {
-	const op = "[service] - Service.CreateEmas"
-
-	// Initialize logger
-	logger := service.logger.WithFields(logrus.Fields{
-		"[op]":   op,
-		"params": fmt.Sprintf("%+v", params),
-	})
-
-	logger.Info()
-
-	// Initialize result
-	result := &CreateEmasResult{}
-
-	// Crawl gold prices from website
-	jual, beli, err := service.crawlGoldPrices(ctx)
-	if err != nil {
-		logger.WithError(err).Error("Failed to crawl gold prices")
-		return nil, fmt.Errorf("failed to crawl gold prices: %w", err)
-	}
-
-	// Create emas
-	emas, err := service.store.CreateEmas(ctx, sqlc.CreateEmasParams{
-		Jual: pgtype.Numeric{
-			Int:   big.NewInt(int64(jual)),
-			Valid: true,
-		},
-		Beli: pgtype.Numeric{
-			Int:   big.NewInt(int64(beli)),
-			Valid: true,
-		},
-		CreatedAt: pgtype.Timestamp{
-			Time:  params.CreatedAt,
-			Valid: true,
-		},
-	})
-	if err != nil {
-		logger.WithError(err).Error()
-
-		return nil, err
-	}
-
-	// Set result
-	result.ID = emas.EmasID.Int32
-
-	return result, nil
 }

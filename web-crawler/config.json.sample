@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "service-a"
+    "name": "web-crawler"
   },
   "db": {
     "postgres": {
@@ -12,10 +12,10 @@
     }
   },
   "scheduler": {
-    "init_delay": "1m",
     "setups": [
       {
         "id": "gold_price",
+        "url": "https://sahabat.pegadaian.co.id/harga-emas",
         "ticker_duration": "24h"
       }
     ]
