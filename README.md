@@ -103,11 +103,13 @@ The application uses a JSON configuration file (`web-crawler/config.json`). Here
   "scheduler": {
     "setups": [
       {
-        "id": "gold_price",
+        "id": "hourly_gold_price",
         "url": "https://sahabat.pegadaian.co.id/harga-emas",
-        "ticker_duration": "24h",
+        "start_time": "11:00",
+        "ticker_duration": "1h",
+        "timezone": "Asia/Jakarta",
         "retry": {
-          "max_attempts": 3,
+          "max_attempts": 5,
           "initial_delay": "2s",
           "max_delay": "30s",
           "backoff_factor": 2.0,
@@ -135,15 +137,21 @@ The application uses a JSON configuration file (`web-crawler/config.json`). Here
 - **setups**: Array of scheduled tasks
   - **id**: Unique identifier for the scheduled task
   - **url**: Target website URL to scrape (e.g., "https://sahabat.pegadaian.co.id/harga-emas")
-  - **ticker_duration**: How often to run the task (e.g., "24h" = every 24 hours)
+  - **start_time**: Time of day to start scheduling (24-hour format: "HH:MM", e.g., "11:00")
+  - **ticker_duration**: Interval between executions (e.g., "1h" = every hour)
+  - **timezone**: Timezone for start_time (e.g., "Asia/Jakarta" or "+07" for UTC+7)
   - **retry**: Retry configuration for handling scraping failures
-    - **max_attempts**: Maximum number of retry attempts (default: 3)
+    - **max_attempts**: Maximum number of retry attempts (default: 5)
     - **initial_delay**: Initial delay before first retry (e.g., "2s")
     - **max_delay**: Maximum delay between retries (e.g., "30s")
     - **backoff_factor**: Multiplier for exponential backoff (e.g., 2.0 means 2s, 4s, 8s...)
     - **enable_jitter**: Add randomization to delays to prevent thundering herd (default: true)
 
-**Note for Development/Debugging:** While the sample configuration sets the scheduler to run every 24 hours, for debugging and testing purposes, it's recommended to use a shorter interval like `"10s"` (10 seconds) to see results quickly.
+**Timezone Options:**
+- **Named Timezone**: `"Asia/Jakarta"`, `"America/New_York"`, `"Europe/London"` (requires tzdata in Docker)
+- **UTC Offset**: `"+07"`, `"-05"`, `"+00"` (works without additional packages)
+
+**Note for Development/Debugging:** While the sample configuration runs hourly starting at 11:00, for debugging and testing purposes, you can set `start_time` to a few minutes ahead of current time and use `ticker_duration` like `"10s"` to see results quickly.
 
 ## How It Works
 
@@ -179,9 +187,29 @@ CREATE TABLE ibdwh.emas (
 
 ### 3. Scheduling
 
-The scheduler runs automatically based on configuration:
-- Configurable interval between executions (default: 24 hours)
-- Continuous monitoring with proper error handling
+The application implements a precision scheduler with the following characteristics:
+
+- **Time-based Start**: Waits until the specified `start_time` before beginning execution
+- **Precise Intervals**: Calculates next execution time immediately, ensuring consistent timing
+- **Non-blocking Execution**: Runs scraping operations in goroutines to maintain schedule precision
+- **Concurrency Control**: Limits to 3 concurrent scraping jobs to prevent resource exhaustion
+- **Context-aware**: Respects cancellation signals for graceful shutdown
+- **Error Resilience**: Failed scraping attempts don't disrupt the scheduling cycle
+
+**Example Behavior:**
+```
+11:00:00 - First tick (scheduled start_time)
+├─ Calculate next: 12:00:00 (1 hour later)
+├─ Reset ticker immediately
+└─ Launch scraping goroutine (runs independently)
+
+12:00:00 - Second tick (precisely on time)
+├─ Calculate next: 13:00:00
+├─ Reset ticker immediately  
+└─ Launch scraping goroutine
+```
+
+This design ensures that scraping operations don't affect schedule timing, making it suitable for production environments where precise timing is crucial.
 
 ### 4. REST API
 
