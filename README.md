@@ -105,7 +105,14 @@ The application uses a JSON configuration file (`web-crawler/config.json`). Here
       {
         "id": "gold_price",
         "url": "https://sahabat.pegadaian.co.id/harga-emas",
-        "ticker_duration": "24h"
+        "ticker_duration": "24h",
+        "retry": {
+          "max_attempts": 3,
+          "initial_delay": "2s",
+          "max_delay": "30s",
+          "backoff_factor": 2.0,
+          "enable_jitter": true
+        }
       }
     ]
   }
@@ -129,6 +136,12 @@ The application uses a JSON configuration file (`web-crawler/config.json`). Here
   - **id**: Unique identifier for the scheduled task
   - **url**: Target website URL to scrape (e.g., "https://sahabat.pegadaian.co.id/harga-emas")
   - **ticker_duration**: How often to run the task (e.g., "24h" = every 24 hours)
+  - **retry**: Retry configuration for handling scraping failures
+    - **max_attempts**: Maximum number of retry attempts (default: 3)
+    - **initial_delay**: Initial delay before first retry (e.g., "2s")
+    - **max_delay**: Maximum delay between retries (e.g., "30s")
+    - **backoff_factor**: Multiplier for exponential backoff (e.g., 2.0 means 2s, 4s, 8s...)
+    - **enable_jitter**: Add randomization to delays to prevent thundering herd (default: true)
 
 **Note for Development/Debugging:** While the sample configuration sets the scheduler to run every 24 hours, for debugging and testing purposes, it's recommended to use a shorter interval like `"10s"` (10 seconds) to see results quickly.
 
@@ -170,6 +183,28 @@ The application provides a REST API for accessing scraped data:
 - Built with Fiber framework for high performance
 - Supports pagination for large datasets
 - Returns JSON responses with structured data
+
+### 5. Retry Mechanism
+
+To ensure data collection reliability, the application implements a robust retry mechanism:
+
+- **Exponential Backoff**: Delays between retries increase exponentially (e.g., 2s, 4s, 8s, 16s)
+- **Configurable Attempts**: Set maximum number of retry attempts per scraping operation
+- **Maximum Delay Cap**: Prevents delays from becoming too long
+- **Jitter**: Adds randomization to delays to prevent multiple instances from overwhelming the server
+- **Context Cancellation**: Respects context cancellation during retry waits
+- **Detailed Logging**: Logs each attempt with timing and error details for debugging
+
+This mechanism helps handle temporary issues like:
+- Network connectivity problems
+- Server overload at the target website
+- Rate limiting responses
+- Temporary DNS resolution failures
+
+**Example retry sequence with default config:**
+1. First attempt fails → Wait 2s
+2. Second attempt fails → Wait 4s  
+3. Third attempt fails → Operation fails with detailed error
 
 ## Development
 
