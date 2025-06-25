@@ -150,9 +150,9 @@ Extracted prices are stored in PostgreSQL with the following schema:
 
 ```sql
 CREATE TABLE ibdwh.emas (
-    emas_id int4 NULL,
-    jual numeric NULL,        -- Selling price
-    beli numeric NULL,        -- Buying price  
+    emas_id SERIAL PRIMARY KEY,  -- Auto-incrementing unique identifier
+    jual numeric NULL,           -- Selling price
+    beli numeric NULL,           -- Buying price  
     created_at timestamp NULL,
     avg_bpkh numeric NULL
 );
