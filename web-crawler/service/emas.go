@@ -16,6 +16,67 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type GetAllEmasParams struct {
+	Page int32
+	Size int32
+}
+
+type GetAllEmasResult struct {
+	Emas  []sqlc.IbdwhEma `json:"emas"`
+	Page  int32           `json:"page"`
+	Size  int32           `json:"size"`
+	Pages int32           `json:"pages"`
+	Total int64           `json:"total"`
+}
+
+func (service *Service) GetAllEmas(ctx context.Context, params *GetAllEmasParams) (*GetAllEmasResult, error) {
+	const op = "[service] - Service.GetAllEmas"
+
+	logger := service.logger.WithFields(logrus.Fields{
+		"[op]":   op,
+		"params": fmt.Sprintf("%+v", params),
+	})
+
+	logger.Info()
+
+	// Initialize result
+	result := &GetAllEmasResult{}
+
+	// Calculate limit and offset from page and size
+	limit := params.Size
+	offset := (params.Page - 1) * params.Size
+
+	allEmas, err := service.store.GetAllEmas(ctx, sqlc.GetAllEmasParams{
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		logger.WithError(err).Error()
+
+		return nil, err
+	}
+
+	// Get total count
+	total, err := service.store.GetTotalEmas(ctx)
+	if err != nil {
+		logger.WithError(err).Error()
+
+		return nil, err
+	}
+
+	// Calculate total pages
+	pages := (total + int64(params.Size) - 1) / int64(params.Size)
+
+	// Set result
+	result.Emas = allEmas
+	result.Page = params.Page
+	result.Size = params.Size
+	result.Pages = int32(pages)
+	result.Total = total
+
+	return result, nil
+}
+
 type CreateEmasParams struct {
 	Url       string
 	CreatedAt time.Time

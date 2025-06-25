@@ -10,6 +10,8 @@ import (
 
 type Querier interface {
 	CreateEmas(ctx context.Context, arg CreateEmasParams) (IbdwhEma, error)
+	GetAllEmas(ctx context.Context, arg GetAllEmasParams) ([]IbdwhEma, error)
+	GetTotalEmas(ctx context.Context) (int64, error)
 }
 
 var _ Querier = (*Queries)(nil)

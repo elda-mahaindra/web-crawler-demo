@@ -8,6 +8,8 @@ import (
 
 type App struct {
 	Name string `mapstructure:"name"`
+	Host string `mapstructure:"host"`
+	Port int    `mapstructure:"port"`
 }
 
 // DB config

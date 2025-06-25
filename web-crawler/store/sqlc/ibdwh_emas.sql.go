@@ -35,3 +35,52 @@ func (q *Queries) CreateEmas(ctx context.Context, arg CreateEmasParams) (IbdwhEm
 	)
 	return i, err
 }
+
+const getAllEmas = `-- name: GetAllEmas :many
+SELECT emas_id, jual, beli, created_at, avg_bpkh FROM ibdwh.emas
+ORDER BY created_at DESC
+LIMIT $1
+OFFSET $2
+`
+
+type GetAllEmasParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) GetAllEmas(ctx context.Context, arg GetAllEmasParams) ([]IbdwhEma, error) {
+	rows, err := q.db.Query(ctx, getAllEmas, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []IbdwhEma{}
+	for rows.Next() {
+		var i IbdwhEma
+		if err := rows.Scan(
+			&i.EmasID,
+			&i.Jual,
+			&i.Beli,
+			&i.CreatedAt,
+			&i.AvgBpkh,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTotalEmas = `-- name: GetTotalEmas :one
+SELECT COUNT(*) FROM ibdwh.emas
+`
+
+func (q *Queries) GetTotalEmas(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getTotalEmas)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}

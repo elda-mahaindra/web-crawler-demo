@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"time"
 
+	"web-crawler/api"
 	"web-crawler/scheduler"
 	"web-crawler/service"
 	"web-crawler/store"
@@ -76,8 +77,14 @@ func start() {
 	// --- Init scheduler ---
 	scheduler := scheduler.NewScheduler(logger, config.Scheduler.Setups, service)
 
+	// --- Init api layer ---
+	restApi := api.NewApi(logger, service)
+
 	// --- Run scheduler ---
 	scheduler.Run()
+
+	// --- Run servers ---
+	runRestServer(config.App.Port, restApi)
 
 	// --- Wait for signal ---
 	ch := make(chan os.Signal, 1)

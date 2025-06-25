@@ -20,6 +20,8 @@ services:
     image: web-crawler
     container_name: web-crawler
     restart: unless-stopped
+    ports:
+      - "4000:4000"
     volumes:
       - ./web-crawler/config.json:/app/config.json
     depends_on:
