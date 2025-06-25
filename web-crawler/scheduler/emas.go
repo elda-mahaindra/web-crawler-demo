@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"web-crawler/service"
@@ -51,8 +52,26 @@ func (scheduler *Scheduler) RunEmas(setup config.SchedulerSetup) {
 			return
 
 		case tickTime := <-ticker.C:
+			// Convert tickTime to configured timezone
+			loc, err := time.LoadLocation(setup.Timezone)
+			if err != nil {
+				// Try parsing as UTC offset (e.g., "+07", "-05")
+				if offset, offsetErr := time.Parse("-07", setup.Timezone); offsetErr == nil {
+					// Create a fixed timezone with the parsed offset
+					offsetSeconds := int(offset.Sub(time.Time{}).Seconds())
+					loc = time.FixedZone(fmt.Sprintf("UTC%s", setup.Timezone), offsetSeconds)
+				} else {
+					// Fallback to UTC if parsing fails
+					loc = time.UTC
+				}
+			}
+
+			// Convert tickTime to the configured timezone
+			localTickTime := tickTime.In(loc)
+
 			logger.WithFields(logrus.Fields{
-				"tick_time": tickTime.Format("2006-01-02 15:04:05"),
+				"tick_time_utc":   tickTime.Format("2006-01-02 15:04:05 MST"),
+				"tick_time_local": localTickTime.Format("2006-01-02 15:04:05 MST"),
 			}).Info()
 
 			// Reset ticker immediately with new duration
@@ -64,7 +83,7 @@ func (scheduler *Scheduler) RunEmas(setup config.SchedulerSetup) {
 			}).Info()
 
 			// Execute scraping logic in goroutine (non-blocking)
-			go func(tickTime time.Time) {
+			go func(localTickTime time.Time) {
 				const op = "[scheduler] - Scheduler.RunEmas - scraping job"
 
 				logger := scheduler.logger.WithFields(logrus.Fields{
@@ -87,7 +106,7 @@ func (scheduler *Scheduler) RunEmas(setup config.SchedulerSetup) {
 				defer func() { <-jobSemaphore }()
 
 				logger.WithFields(logrus.Fields{
-					"job_start_time": tickTime.Format("2006-01-02 15:04:05"),
+					"job_start_time": localTickTime.Format("2006-01-02 15:04:05"),
 				}).Info()
 
 				jobStartTime := time.Now()
@@ -95,7 +114,7 @@ func (scheduler *Scheduler) RunEmas(setup config.SchedulerSetup) {
 				// Execute the scraping
 				result, err := scheduler.service.CreateEmas(ctx, &service.CreateEmasParams{
 					Url:       setup.Url,
-					CreatedAt: tickTime,
+					CreatedAt: localTickTime,
 					Retry: service.RetryConfig{
 						MaxAttempts:   setup.Retry.MaxAttempts,
 						InitialDelay:  setup.Retry.InitialDelay,
@@ -118,7 +137,7 @@ func (scheduler *Scheduler) RunEmas(setup config.SchedulerSetup) {
 						"job_duration_seconds": jobDuration.Seconds(),
 					}).Info()
 				}
-			}(tickTime)
+			}(localTickTime)
 		}
 	}
 }
